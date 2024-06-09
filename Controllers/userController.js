@@ -17,46 +17,10 @@ const authToken = process.env.TWILIO_AUTHTOKEN;
 const serviceId = process.env.TWILIO_SERVICEID;
 
 const client = twilio(accountSid, authToken);
-console.log(client, "ooo");
-
-// export const Signup = async (req, res) => {
-//   const { phoneNumber, otp, ...userData } = req.body;
-
-//   try {
-//     const otpVerificationResponse = await client.verify.v2
-//       .services(serviceId)
-//       .verificationChecks.create({
-//         to: "+91" + phoneNumber,
-//         code: otp,
-//       });
-
-//     // Log the response from Twilio
-//     console.log("OTP Verification Response:", otpVerificationResponse);
-
-//     // Ensure the status check is correct
-//     if (otpVerificationResponse.status !== "approved") {
-//       console.log("Invalid OTP");
-//       return res.status(400).json({ success: false, message: "Invalid OTP" });
-//     }
-
-//     const user = new User(userData);
-//     await user.save();
-
-//     return res.json({ success: true, message: "User registered successfully" });
-//   } catch (error) {
-//     console.error("Error registering user:", error);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Error registering user",
-//       error: error.message,
-//     });
-//   }
-// };
-//_____________________________________________________
 
 export const Signup = async (req, res, next) => {
   try {
-    const { value, error } = Schemas.joiUserSchema.validate(req.body);
+    const { value, error } = joiUserSchema.validate(req.body);
     if (error) {
       return res.status(400).json({
         status: "error",
@@ -64,10 +28,9 @@ export const Signup = async (req, res, next) => {
       });
     }
 
-    const { name, email, phoneNumber, password } = value;
+    const { username, email, phoneNumber, password } = value;
 
-    
-    const existinguser = await User.findOne({ name: name });
+    const existinguser = await User.findOne({ username: username });
     if (existinguser) {
       res.status(400).json({
         status: "error",
@@ -78,7 +41,7 @@ export const Signup = async (req, res, next) => {
     const hashedpassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      name,
+      username,
       email,
       phoneNumber,
       password: hashedpassword,
@@ -129,12 +92,11 @@ export const completeRegister = async (req, res) => {
   }
 };
 
-//_________________________________________________________________________________
 export const Signin = async (req, res, next) => {
   const { value, error } = joiUserSchema.validate(req.body);
 
   if (error) {
-    res.json(error.message);
+    return res.status(400).json({ error: error.message });
   }
 
   const { email, password } = value;
@@ -144,41 +106,58 @@ export const Signin = async (req, res, next) => {
     if (!validUser) {
       return next(errorHandler(404, "User not found"));
     }
+    if (validUser.isBlocked) {
+      return res
+        .status(403)
+        .json({ status: "false", message: "user is blocked" });
+    }
+
     const validPassword = await bcrypt.compare(password, validUser.password);
     if (!validPassword) {
       return next(errorHandler(401, "Incorrect password"));
     }
+
     const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
-    res.status(200).json({ message: "user logged successfully", token });
+
+    res.status(200).json({
+      message: "User logged in successfully",
+      token,
+      user: {
+        id: validUser._id,
+        username: validUser.username,
+        email: validUser.email,
+        phoneNumber: validUser.phoneNumber,
+        profile: validUser.profile,
+      },
+    });
   } catch (error) {
     next(error);
   }
 };
+export const updateUser = async (req, res) => {
+  const { _id } = req.params;
+  const { username, email, password, phoneNumber, profile } = req.body;
 
-export const updateUser = async (req, res, next) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params._id,
-      {
-        $set: {
-          username: req.body.username,
-          email: req.body.email,
-          password: req.body.password,
-          phoneNumber: req.body.phoneNumber,
-          profile: req.body.profile,
-        },
-      },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      return next(errorHandler(404, "User not found"));
+    const updatedData = { username, email, phoneNumber, profile };
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updatedData.password = await bcrypt.hash(password, salt);
     }
 
-    const { password, ...rest } = updatedUser._doc;
-    res.status(200).json(rest);
+    const updatedUser = await User.findByIdAndUpdate(_id, updatedData, {
+      new: true,
+    });
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({ success: true, user: updatedUser });
   } catch (error) {
-    next(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
