@@ -47,14 +47,12 @@ export const verifyOtp = async (req, res) => {
         message: "otp verified successfully",
       });
     } else {
-      // console.log("invalid otp")
       res.status(400).json({
         success: false,
         message: "invalid otp ",
       });
     }
   } catch (error) {
-    // console.error("Error verifying otp",error);
     res.status(500).json({
       success: false,
       message: "Error verifying otp",

@@ -25,8 +25,8 @@ router.get("/search", searchProperty);
 
 router.post("/verifyotp", verifyOtp);
 router.use(verifyToken);
-router.put("/:_id", updateUser);
-router.delete("/:id", deleteaccount);
+router.put("/users/:id", updateUser);
+router.delete("users/:id", deleteaccount);
 
 router.get("/properties/:id", propertybyid);
 router.post("/payment", Payment);

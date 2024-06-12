@@ -134,8 +134,10 @@ export const Signin = async (req, res, next) => {
     next(error);
   }
 };
+
+
 export const updateUser = async (req, res) => {
-  const { _id } = req.params;
+  const { id } = req.params;
   const { username, email, password, phoneNumber, profile } = req.body;
 
   try {
@@ -145,14 +147,10 @@ export const updateUser = async (req, res) => {
       updatedData.password = await bcrypt.hash(password, salt);
     }
 
-    const updatedUser = await User.findByIdAndUpdate(_id, updatedData, {
-      new: true,
-    });
+    const updatedUser = await User.findByIdAndUpdate(id, updatedData, { new: true });
 
     if (!updatedUser) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     res.status(200).json({ success: true, user: updatedUser });
@@ -160,6 +158,7 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const deleteaccount = async (req, res, next) => {
   if (req.user.id !== req.params.id)
