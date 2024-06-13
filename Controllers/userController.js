@@ -272,11 +272,13 @@ export const Payment = async (req, res, next) => {
     next(errorHandler(error.message));
   }
 };
+///
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_SECRET,
 });
+
 export const createorder = async (req, res, next) => {
   const { userId, PropertyId, amount, currency } = req.body;
 
