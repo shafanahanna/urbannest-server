@@ -135,7 +135,6 @@ export const Signin = async (req, res, next) => {
   }
 };
 
-
 export const updateUser = async (req, res) => {
   const { id } = req.params;
   const { username, email, password, phoneNumber, profile } = req.body;
@@ -147,10 +146,14 @@ export const updateUser = async (req, res) => {
       updatedData.password = await bcrypt.hash(password, salt);
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, updatedData, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(id, updatedData, {
+      new: true,
+    });
 
     if (!updatedUser) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.status(200).json({ success: true, user: updatedUser });
@@ -158,7 +161,6 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const deleteaccount = async (req, res, next) => {
   if (req.user.id !== req.params.id)
@@ -246,41 +248,15 @@ export const searchProperty = async (req, res, next) => {
   }
 };
 
-export const Payment = async (req, res, next) => {
-  const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_SECRET,
-  });
-
-  const { amount, currency, receipt } = req.body;
-
-  try {
-    const payment = await razorpay.orders.create({ amount, currency, receipt });
-    await sendEmailToUser(
-      "shafanahanna1999@gmail.com",
-      amount,
-      currency,
-      receipt
-    );
-    res.json({
-      status: "success",
-      message: "payment initiated",
-      data: payment,
-    });
-  } catch (error) {
-    console.log(error);
-    next(errorHandler(error.message));
-  }
-};
-///
+// createorder
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_SECRET,
 });
-
 export const createorder = async (req, res, next) => {
   const { userId, PropertyId, amount, currency } = req.body;
+  console.log("Received create order request:", req.body);
 
   try {
     const payment = await razorpay.orders.create({
@@ -297,6 +273,7 @@ export const createorder = async (req, res, next) => {
     });
 
     await order.save();
+    console.log("Order saved:", order);
 
     res.status(201).json({
       status: "success",
@@ -305,7 +282,36 @@ export const createorder = async (req, res, next) => {
       payment_id: payment.id,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error creating order:", error);
+    next(errorHandler(error.message));
+  }
+};
+
+// Payment
+export const Payment = async (req, res, next) => {
+  const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_SECRET,
+  });
+
+  const { amount, currency, receipt } = req.body;
+
+  try {
+    const payment = await razorpay.orders.create({ amount, currency, receipt });
+    console.log("Payment created:", payment);
+    await sendEmailToUser(
+      "shafanahanna1999@gmail.com",
+      amount,
+      currency,
+      receipt
+    );
+    res.json({
+      status: "success",
+      message: "payment initiated",
+      data: payment,
+    });
+  } catch (error) {
+    console.error("Error initiating payment:", error);
     next(errorHandler(error.message));
   }
 };

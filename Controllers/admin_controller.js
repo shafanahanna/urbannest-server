@@ -43,7 +43,7 @@ export const viewUser = async (req, res) => {
       status: "success",
       message: "Fetched users successsfully",
       data: all_users,
-      datacount:allusers
+      datacount: allusers,
     });
   }
 };
@@ -89,7 +89,7 @@ export const viewallproperty = async (req, res, next) => {
         status: "Success",
         message: "successfully package fetched",
         data: properties,
-        datacount:allproperty
+        datacount: allproperty,
       });
     } else {
       next(errorHandler(404, "package not found"));
@@ -159,7 +159,7 @@ export const deleteProperty = async (req, res, next) => {
 
     res
       .status(200)
-      .json({ message: "Property deleted successfully", deletedProperty });
+      .json({ message: "Property deleted ", deletedProperty });
   } catch (err) {
     next(errorHandler);
   }
@@ -208,10 +208,10 @@ export const getAllOrders = async (req, res, next) => {
       status: "success",
       message: "All bookings fetched successfully",
       data: orders,
-      datacount:allorders
+      datacount: allorders,
     });
   } catch (error) {
     console.log(error);
-    next(trycatchmidddleware(error.message));
-}
+    next(errorHandler(error.message));
+  }
 };
