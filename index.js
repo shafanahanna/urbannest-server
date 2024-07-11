@@ -22,7 +22,9 @@ mongoose
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin : "https://urbannest-front.vercel.app"
+}));
 
 const port = 3000;
 
