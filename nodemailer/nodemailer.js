@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export const sendEmailToUser = async (amount, currency, receipt) => {
+export const sendEmailToUser = async (amount, currency, receipt, email) => {
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
@@ -13,10 +13,12 @@ export const sendEmailToUser = async (amount, currency, receipt) => {
 
   const mailOptions = {
     from: process.env.APP_EMAIL,
-    to: "shafanahanna1999@gmail.com",
+    to: email,
     subject: `Order confirm`,
     html: `<h4>Dear Customer,</h4>
            <p>Your order has been confirmed</p>
+           <p><b>Amount:</b>${amount} ${currency}</p>
+           <p><b>Receipt:</b>${receipt}</p>
            <p>Thankyou for your order.if you have any issue mail to this email</p>
           `,
   };
@@ -29,31 +31,30 @@ export const sendEmailToUser = async (amount, currency, receipt) => {
   }
 };
 
-
-export const sendEnquiry = async (req,res) => {
+export const sendEnquiry = async (req, res) => {
   const { name, email, message } = req.body;
   console.log(req.body);
 
   if (!name || !email || !message) {
     return res.status(400).json({
-      message: "Please fill all the fields...!"
+      message: "Please fill all the fields...!",
     });
   }
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: "gmail",
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
-    }
+    },
   });
 
   const mailOptions = {
-    from: email, 
-    to: process.env.EMAIL_USER, 
-    replyTo: email, 
+    from: email,
+    to: process.env.EMAIL_USER,
+    replyTo: email,
     subject: `Enquiry from ${name}`,
-    text: message
+    text: message,
   };
 
   console.log(mailOptions);
@@ -67,9 +68,8 @@ export const sendEnquiry = async (req,res) => {
   } catch (error) {
     return res.status(500).json({
       status: "error",
-      message: 'Error sending email',
-      error:error.message
-});
-}
+      message: "Error sending email",
+      error: error.message,
+    });
+  }
 };
-
